@@ -62,3 +62,109 @@ LEFT JOIN raw.product_category AS f ON f.category_id = c.parent_id;    -- famili
 --       CAST(strftime(fecha, '%Y%m%d') AS INTEGER)
 --   * Si algo puede venir vacío (ej. NPS anónimos, sin cliente), podés agregar
 --     una fila "Desconocido" con clave -1 y usar COALESCE(clave, -1) en los hechos.
+
+
+
+-- ---------------------------------------------------------------------
+-- 1. Dimensión de Clientes (dim_customer)
+-- ---------------------------------------------------------------------
+CREATE TABLE dim_customer (
+    customer_key INTEGER PRIMARY KEY,
+    customer_id  INTEGER NOT NULL,
+    first_name   VARCHAR,
+    last_name    VARCHAR,
+    full_name    VARCHAR,
+    email        VARCHAR,
+    status_desc  VARCHAR
+);
+
+-- Fila -1 para clientes desconocidos (ej. encuestas anónimas o web sin login)
+INSERT INTO dim_customer 
+VALUES (-1, -1, 'Desconocido', 'Desconocido', 'Desconocido', 'Desconocido', 'Desconocido');
+
+INSERT INTO dim_customer
+SELECT 
+    ROW_NUMBER() OVER (ORDER BY customer_id) AS customer_key,
+    customer_id,
+    first_name,
+    last_name,
+    CONCAT(first_name, ' ', last_name) AS full_name,
+    email,
+    CASE 
+        WHEN status = 'A' THEN 'Activo'
+        WHEN status = 'I' THEN 'Inactivo'
+        ELSE 'Desconocido'
+    END AS status_desc
+FROM raw.customer;
+
+
+-- ---------------------------------------------------------------------
+-- 2. Dimensión Geográfica (dim_location)
+-- ---------------------------------------------------------------------
+CREATE TABLE dim_location (
+    location_key  INTEGER PRIMARY KEY,
+    address_id    INTEGER NOT NULL,
+    city          VARCHAR,
+    province_name VARCHAR,
+    province_code VARCHAR
+);
+
+-- Fila -1 por si un pedido no tiene dirección
+INSERT INTO dim_location 
+VALUES (-1, -1, 'Desconocido', 'Desconocido', 'Desc');
+
+INSERT INTO dim_location
+SELECT 
+    ROW_NUMBER() OVER (ORDER BY a.address_id) AS location_key,
+    a.address_id,
+    a.city,
+    p.name AS province_name,
+    p.code AS province_code
+FROM raw.address AS a
+LEFT JOIN raw.province AS p ON a.province_id = p.province_id;
+
+
+-- ---------------------------------------------------------------------
+-- 3. Dimensión de Canales de Venta (dim_channel)
+-- ---------------------------------------------------------------------
+CREATE TABLE dim_channel (
+    channel_key INTEGER PRIMARY KEY,
+    channel_id  INTEGER NOT NULL,
+    code        VARCHAR NOT NULL,
+    name        VARCHAR NOT NULL
+);
+
+INSERT INTO dim_channel
+SELECT 
+    ROW_NUMBER() OVER (ORDER BY channel_id) AS channel_key,
+    channel_id,
+    code,
+    name
+FROM raw.channel;
+
+
+-- ---------------------------------------------------------------------
+-- 4. Dimensión de Tiempo / Calendario (dim_date)
+-- ---------------------------------------------------------------------
+-- Basado en los tips de la consigna para tener el análisis mensual
+CREATE TABLE dim_date (
+    date_key   INTEGER PRIMARY KEY,
+    full_date  DATE NOT NULL,
+    year       INTEGER,
+    month      INTEGER,
+    month_name VARCHAR,
+    day_name   VARCHAR
+);
+
+INSERT INTO dim_date
+SELECT 
+    CAST(strftime(fecha, '%Y%m%d') AS INTEGER) AS date_key,
+    fecha AS full_date,
+    year(fecha) AS year,
+    month(fecha) AS month,
+    monthname(fecha) AS month_name,
+    dayname(fecha) AS day_name
+FROM (
+    SELECT CAST(range AS DATE) AS fecha
+    FROM range(DATE '2024-01-01', DATE '2025-10-01', INTERVAL 1 DAY)
+);
