@@ -101,3 +101,10 @@ JOIN dim_product p ON si.product_key = p.product_key
 WHERE si.status IN ('PAID', 'FULFILLED')
 GROUP BY d.year, d.month, d.month_name, p.name
 ORDER BY d.year, d.month, total_sales DESC;
+
+-- 7. Pedidos Vendidos
+-- Cuenta la cantidad de facturas (tickets) cobradas o entregadas
+SELECT 
+    COUNT(DISTINCT sales_id) AS pedidos_vendidos
+FROM fact_sales
+WHERE status IN ('PAID', 'FULFILLED');
