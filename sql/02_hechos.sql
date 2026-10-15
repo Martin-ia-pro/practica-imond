@@ -39,6 +39,9 @@ CREATE TABLE fact_sales (
     channel_key INTEGER REFERENCES dim_channel (channel_key),
     location_key INTEGER REFERENCES dim_location (location_key),
     status VARCHAR,
+    subtotal DECIMAL(12,2),
+    tax_amount DECIMAL(12,2),
+    shipping_fee DECIMAL(12,2),
     total_amount DECIMAL(12,2)
 );
 
@@ -50,6 +53,9 @@ SELECT
     COALESCE(dch.channel_key, -1) AS channel_key,
     COALESCE(dl.location_key, -1) AS location_key,
     so.status,
+    so.subtotal,
+    so.tax_amount,
+    so.shipping_fee,
     so.total_amount
 FROM raw.sales_order AS so
 LEFT JOIN dim_customer AS dc ON so.customer_id = dc.customer_id

@@ -18,18 +18,15 @@ ORDER BY product_key;
 
 
 -- 1. Total Ventas ($M) Desglosado y Ticket Promedio
--- Validamos los componentes según la regla: total_amount = subtotal + tax_amount + shipping_fee
 SELECT 
-    SUM(so.subtotal) / 1000000.0 AS ventas_sin_impuestos,
-    SUM(so.tax_amount) / 1000000.0 AS impuestos,
-    (SUM(so.subtotal) + SUM(so.tax_amount)) / 1000000.0 AS ventas_sin_envio,
-    SUM(so.shipping_fee) / 1000000.0 AS costo_envio,
-    SUM(fs.total_amount) / 1000000.0 AS ventas_totales,
-    SUM(fs.total_amount) / COUNT(fs.sales_id) AS ticket_promedio
-FROM fact_sales fs
-JOIN raw.sales_order so ON fs.sales_id = so.order_id
-WHERE fs.status IN ('PAID', 'FULFILLED');
-
+    SUM(subtotal) / 1000000.0 AS ventas_sin_impuestos,
+    SUM(tax_amount) / 1000000.0 AS impuestos,
+    (SUM(subtotal) + SUM(tax_amount)) / 1000000.0 AS ventas_sin_envio,
+    SUM(shipping_fee) / 1000000.0 AS costo_envio,
+    SUM(total_amount) / 1000000.0 AS ventas_totales,
+    SUM(total_amount) / COUNT(sales_id) AS ticket_promedio
+FROM fact_sales
+WHERE status IN ('PAID', 'FULFILLED');
 
 
 -- 2. Usuarios Activos Desglosados
