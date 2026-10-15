@@ -16,15 +16,19 @@ FROM dim_product
 ORDER BY product_key;
 
 
--- TU TURNO: agregá acá tus consultas.
 
--- 1. Total Ventas ($M) y Ticket Promedio ($K)
--- Filtra estados PAID y FULFILLED, y divide para mostrar en millones y miles[cite: 5].
+-- 1. Total Ventas ($M) Desglosado y Ticket Promedio
+-- Validamos los componentes según la regla: total_amount = subtotal + tax_amount + shipping_fee
 SELECT 
-    SUM(total_amount) / 1000000 AS ventas_millones,
-    SUM(total_amount) / COUNT(*) AS ticket_promedio
-FROM fact_sales
-WHERE status IN ('PAID', 'FULFILLED');
+    SUM(so.subtotal) / 1000000.0 AS ventas_sin_impuestos,
+    SUM(so.tax_amount) / 1000000.0 AS impuestos,
+    (SUM(so.subtotal) + SUM(so.tax_amount)) / 1000000.0 AS ventas_sin_envio,
+    SUM(so.shipping_fee) / 1000000.0 AS costo_envio,
+    SUM(fs.total_amount) / 1000000.0 AS ventas_totales,
+    SUM(fs.total_amount) / COUNT(fs.sales_id) AS ticket_promedio
+FROM fact_sales fs
+JOIN raw.sales_order so ON fs.sales_id = so.order_id
+WHERE fs.status IN ('PAID', 'FULFILLED');
 
 
 
@@ -39,6 +43,7 @@ SELECT
         COUNT(DISTINCT CASE WHEN customer_key = -1 THEN session_id END)
     ) AS usuarios_activos
 FROM fact_web_session;
+
 
 
 -- 3 Evolución Mensual de Usuarios Activos
@@ -56,6 +61,8 @@ JOIN dim_date AS d ON ws.date_key = d.date_key
 GROUP BY d.year, d.month, d.month_name
 ORDER BY d.year, d.month;
 
+
+
 -- Usuarios Activos Totales (nK)
 -- Combina clientes únicos logueados con sesiones únicas anónimas en un solo número
 SELECT 
@@ -65,6 +72,8 @@ SELECT
         COUNT(DISTINCT CASE WHEN customer_key = -1 THEN session_id END)
     ) / 1000.0 AS usuarios_activos_k
 FROM fact_web_session;
+
+
 
 -- 4. Ventas por Provincia
 -- Agrupa el total de ventas cruzando con la dimensión de ubicación[cite: 5].
@@ -77,6 +86,8 @@ WHERE s.status IN ('PAID', 'FULFILLED')
 GROUP BY l.province_name
 ORDER BY total_ventas DESC;
 
+
+
 -- 5. Puntos NPS
 -- Aplica la fórmula ((%9-10) - (%0-6)) * 100 sobre las categorías previamente calculadas en la tabla de hechos[cite: 5].
 SELECT 
@@ -86,6 +97,8 @@ SELECT
         SUM(CASE WHEN nps_category = 'Detractor' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)
     ) AS nps_score
 FROM fact_nps;
+
+
 
 -- 6. Ranking Mensual por Producto
 -- Agrupa el monto de las líneas de detalle por mes y producto[cite: 5].
@@ -101,6 +114,8 @@ JOIN dim_product p ON si.product_key = p.product_key
 WHERE si.status IN ('PAID', 'FULFILLED')
 GROUP BY d.year, d.month, d.month_name, p.name
 ORDER BY d.year, d.month, total_sales DESC;
+
+
 
 -- 7. Pedidos Vendidos
 -- Cuenta la cantidad de facturas (tickets) cobradas o entregadas
