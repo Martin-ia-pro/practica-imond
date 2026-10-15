@@ -70,6 +70,9 @@ erDiagram
         INTEGER channel_key FK
         INTEGER location_key FK
         VARCHAR status
+        DECIMAL subtotal
+        DECIMAL tax_amount
+        DECIMAL shipping_fee
         DECIMAL total_amount
     }
     fact_sales_item {
