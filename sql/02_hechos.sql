@@ -30,7 +30,7 @@
 
 -- ---------------------------------------------------------------------
 -- 1. Hechos de Ventas Cabecera (fact_sales)
--- Grano: Una fila representa la cabecera de un pedido de venta.
+-- Grano: Una fila = un pedido. (Solo subtotales y totales puros)
 -- ---------------------------------------------------------------------
 CREATE TABLE fact_sales (
     sales_id INTEGER PRIMARY KEY,
@@ -40,8 +40,6 @@ CREATE TABLE fact_sales (
     location_key INTEGER REFERENCES dim_location (location_key),
     status VARCHAR,
     subtotal DECIMAL(12,2),
-    tax_amount DECIMAL(12,2),
-    shipping_fee DECIMAL(12,2),
     total_amount DECIMAL(12,2)
 );
 
@@ -54,8 +52,6 @@ SELECT
     COALESCE(dl.location_key, -1) AS location_key,
     so.status,
     so.subtotal,
-    so.tax_amount,
-    so.shipping_fee,
     so.total_amount
 FROM raw.sales_order AS so
 LEFT JOIN dim_customer AS dc ON so.customer_id = dc.customer_id
@@ -65,7 +61,7 @@ LEFT JOIN dim_location AS dl ON so.shipping_address_id = dl.address_id;
 
 -- ---------------------------------------------------------------------
 -- 2. Hechos de Ventas Detalle (fact_sales_item)
--- Grano: Una fila representa un producto específico dentro de un pedido.
+-- Grano: Una fila = un producto dentro del pedido.
 -- ---------------------------------------------------------------------
 CREATE TABLE fact_sales_item (
     order_item_id BIGINT PRIMARY KEY,
@@ -92,8 +88,58 @@ LEFT JOIN dim_product AS dp ON soi.product_id = dp.product_id;
 
 
 -- ---------------------------------------------------------------------
--- 3. Hechos de Sesiones Web (fact_web_session)
--- Grano: Una fila representa una sesión de navegación web.
+-- 3. Hechos de Envíos (fact_shipping)
+-- Grano: Una fila = el evento de enviar un pedido.
+-- ---------------------------------------------------------------------
+CREATE TABLE fact_shipping (
+    shipping_id BIGINT PRIMARY KEY,
+    sales_id INTEGER REFERENCES fact_sales (sales_id),
+    date_key INTEGER REFERENCES dim_date (date_key),
+    location_key INTEGER REFERENCES dim_location (location_key),
+    carrier VARCHAR,
+    status VARCHAR,
+    shipping_fee DECIMAL(12,2)
+);
+
+INSERT INTO fact_shipping
+SELECT 
+    sh.shipment_id AS shipping_id,
+    sh.order_id AS sales_id,
+    CAST(strftime(so.order_date, '%Y%m%d') AS INTEGER) AS date_key,
+    COALESCE(dl.location_key, -1) AS location_key,
+    sh.carrier,
+    sh.status,
+    so.shipping_fee 
+FROM raw.shipment AS sh
+JOIN raw.sales_order AS so ON sh.order_id = so.order_id
+LEFT JOIN dim_location AS dl ON so.shipping_address_id = dl.address_id;
+
+
+-- ---------------------------------------------------------------------
+-- 4. Hechos de Impuestos (fact_tax)
+-- Grano: Una fila = el cobro de impuesto de un pedido.
+-- ---------------------------------------------------------------------
+CREATE TABLE fact_tax (
+    tax_id INTEGER PRIMARY KEY,
+    sales_id INTEGER REFERENCES fact_sales (sales_id),
+    date_key INTEGER REFERENCES dim_date (date_key),
+    tax_amount DECIMAL(12,2)
+);
+
+-- Como no hay tabla raw de impuestos, extraemos el evento desde la orden
+INSERT INTO fact_tax
+SELECT 
+    ROW_NUMBER() OVER (ORDER BY order_id) AS tax_id,
+    order_id AS sales_id,
+    CAST(strftime(order_date, '%Y%m%d') AS INTEGER) AS date_key,
+    tax_amount
+FROM raw.sales_order
+WHERE tax_amount IS NOT NULL AND tax_amount > 0;
+
+
+-- ---------------------------------------------------------------------
+-- 5. Hechos de Sesiones Web (fact_web_session)
+-- Grano: Una fila = una sesión de navegación web.
 -- ---------------------------------------------------------------------
 CREATE TABLE fact_web_session (
     session_id BIGINT PRIMARY KEY,
@@ -115,8 +161,8 @@ LEFT JOIN dim_customer AS dc ON ws.customer_id = dc.customer_id;
 
 
 -- ---------------------------------------------------------------------
--- 4. Hechos de Encuestas (fact_nps)
--- Grano: Una fila representa una respuesta a la encuesta de satisfacción.
+-- 6. Hechos de Encuestas (fact_nps)
+-- Grano: Una fila = una respuesta a la encuesta de satisfacción.
 -- ---------------------------------------------------------------------
 CREATE TABLE fact_nps (
     nps_id BIGINT PRIMARY KEY,

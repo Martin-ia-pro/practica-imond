@@ -18,15 +18,18 @@ ORDER BY product_key;
 
 
 -- 1. Total Ventas ($M) Desglosado y Ticket Promedio
+-- Combina las múltiples tablas de hechos (sales, tax y shipping) para validar el total
 SELECT 
-    SUM(subtotal) / 1000000.0 AS ventas_sin_impuestos,
-    SUM(tax_amount) / 1000000.0 AS impuestos,
-    (SUM(subtotal) + SUM(tax_amount)) / 1000000.0 AS ventas_sin_envio,
-    SUM(shipping_fee) / 1000000.0 AS costo_envio,
-    SUM(total_amount) / 1000000.0 AS ventas_totales,
-    SUM(total_amount) / COUNT(sales_id) AS ticket_promedio
-FROM fact_sales
-WHERE status IN ('PAID', 'FULFILLED');
+    SUM(fs.subtotal) / 1000000.0 AS ventas_sin_impuestos,
+    SUM(ft.tax_amount) / 1000000.0 AS impuestos,
+    (SUM(fs.subtotal) + SUM(ft.tax_amount)) / 1000000.0 AS ventas_sin_envio,
+    SUM(fsh.shipping_fee) / 1000000.0 AS costo_envio,
+    SUM(fs.total_amount) / 1000000.0 AS ventas_totales,
+    SUM(fs.total_amount) / COUNT(DISTINCT fs.sales_id) AS ticket_promedio
+FROM fact_sales fs
+LEFT JOIN fact_tax ft ON fs.sales_id = ft.sales_id
+LEFT JOIN fact_shipping fsh ON fs.sales_id = fsh.sales_id
+WHERE fs.status IN ('PAID', 'FULFILLED');
 
 
 -- 2. Usuarios Activos Desglosados

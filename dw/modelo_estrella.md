@@ -12,10 +12,15 @@ erDiagram
     dim_date ||--o{ fact_nps : "date_key"
     dim_date ||--o{ fact_sales : "date_key"
     dim_date ||--o{ fact_sales_item : "date_key"
+    dim_date ||--o{ fact_shipping : "date_key"
+    dim_date ||--o{ fact_tax : "date_key"
     dim_date ||--o{ fact_web_session : "date_key"
     dim_location ||--o{ fact_sales : "location_key"
+    dim_location ||--o{ fact_shipping : "location_key"
     dim_product ||--o{ fact_sales_item : "product_key"
     fact_sales ||--o{ fact_sales_item : "sales_id"
+    fact_sales ||--o{ fact_shipping : "sales_id"
+    fact_sales ||--o{ fact_tax : "sales_id"
     dim_channel {
         INTEGER channel_key PK
         INTEGER channel_id
@@ -71,8 +76,6 @@ erDiagram
         INTEGER location_key FK
         VARCHAR status
         DECIMAL subtotal
-        DECIMAL tax_amount
-        DECIMAL shipping_fee
         DECIMAL total_amount
     }
     fact_sales_item {
@@ -83,6 +86,21 @@ erDiagram
         INTEGER quantity
         DECIMAL line_total
         VARCHAR status
+    }
+    fact_shipping {
+        BIGINT shipping_id PK
+        INTEGER sales_id FK
+        INTEGER date_key FK
+        INTEGER location_key FK
+        VARCHAR carrier
+        VARCHAR status
+        DECIMAL shipping_fee
+    }
+    fact_tax {
+        INTEGER tax_id PK
+        INTEGER sales_id FK
+        INTEGER date_key FK
+        DECIMAL tax_amount
     }
     fact_web_session {
         BIGINT session_id PK
