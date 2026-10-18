@@ -9,6 +9,40 @@
 --     ranking mensual por producto) usando las tablas del modelo estrella.
 -- =====================================================================
 
+-- =====================================================================
+-- A. CONSULTAS DE VALIDACIÓN Y CALIDAD DE DATOS (RAW vs DW)
+-- =====================================================================
+
+-- Validación 1: Conteo de filas (verifica que no se perdieron ni duplicaron registros)
+SELECT 'Ventas (Cabecera)' AS tabla, (SELECT COUNT(*) FROM raw.sales_order) AS filas_raw, (SELECT COUNT(*) FROM fact_sales) AS filas_dw
+UNION ALL
+SELECT 'Ventas (Detalle)', (SELECT COUNT(*) FROM raw.sales_order_item), (SELECT COUNT(*) FROM fact_sales_item)
+UNION ALL
+SELECT 'Envíos', (SELECT COUNT(*) FROM raw.shipment), (SELECT COUNT(*) FROM fact_shipping)
+UNION ALL
+SELECT 'Sesiones Web', (SELECT COUNT(*) FROM raw.web_session), (SELECT COUNT(*) FROM fact_web_session)
+UNION ALL
+SELECT 'Respuestas NPS', (SELECT COUNT(*) FROM raw.nps_response), (SELECT COUNT(*) FROM fact_nps);
+
+-- Validación 2: Conciliación monetaria en ventas efectivas (subtotal + IVA + envío = total)
+SELECT 
+    (SELECT SUM(total_amount) FROM raw.sales_order WHERE status IN ('PAID', 'FULFILLED')) AS total_en_raw,
+    SUM(fs.total_amount) AS total_en_dw,
+    SUM(fs.subtotal) + COALESCE(SUM(ft.tax_amount), 0) + COALESCE(SUM(fsh.shipping_fee), 0) AS suma_componentes,
+    SUM(fs.total_amount) - (SUM(fs.subtotal) + COALESCE(SUM(ft.tax_amount), 0) + COALESCE(SUM(fsh.shipping_fee), 0)) AS diferencia
+FROM fact_sales fs
+LEFT JOIN fact_tax ft ON fs.sales_id = ft.sales_id
+LEFT JOIN fact_shipping fsh ON fs.sales_id = fsh.sales_id
+WHERE fs.status IN ('PAID', 'FULFILLED');
+
+-- Validación 3: Control de nulos y auditoría de claves por defecto (-1)
+SELECT 
+    COUNT(*) FILTER (WHERE customer_key IS NULL OR date_key IS NULL OR channel_key IS NULL OR location_key IS NULL) AS claves_foraneas_nulas,
+    COUNT(*) FILTER (WHERE location_key = -1) AS ventas_sin_envio_domicilio,
+    (SELECT COUNT(*) FILTER (WHERE customer_key = -1) FROM fact_web_session) AS sesiones_web_anonimas
+FROM fact_sales;
+
+
 
 -- Ejemplo: revisar la dimensión producto
 SELECT product_key, name, category, family, list_price
@@ -123,3 +157,4 @@ SELECT
     COUNT(DISTINCT sales_id) AS pedidos_vendidos
 FROM fact_sales
 WHERE status IN ('PAID', 'FULFILLED');
+
