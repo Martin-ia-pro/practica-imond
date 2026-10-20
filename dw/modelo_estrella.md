@@ -5,22 +5,28 @@ Generado por `run_sql.py` a partir de las tablas de `warehouse.duckdb`.
 ```mermaid
 erDiagram
     dim_channel ||--o{ fact_nps : "channel_key"
+    dim_channel ||--o{ fact_orders : "channel_key"
+    dim_channel ||--o{ fact_payment : "channel_key"
     dim_channel ||--o{ fact_sales : "channel_key"
     dim_customer ||--o{ fact_nps : "customer_key"
+    dim_customer ||--o{ fact_orders : "customer_key"
+    dim_customer ||--o{ fact_payment : "customer_key"
     dim_customer ||--o{ fact_sales : "customer_key"
+    dim_customer ||--o{ fact_shipment : "customer_key"
     dim_customer ||--o{ fact_web_session : "customer_key"
     dim_date ||--o{ fact_nps : "date_key"
+    dim_date ||--o{ fact_orders : "date_key"
+    dim_date ||--o{ fact_payment : "date_key"
     dim_date ||--o{ fact_sales : "date_key"
-    dim_date ||--o{ fact_sales_item : "date_key"
-    dim_date ||--o{ fact_shipping : "date_key"
-    dim_date ||--o{ fact_tax : "date_key"
+    dim_date ||--o{ fact_shipment : "date_key"
     dim_date ||--o{ fact_web_session : "date_key"
+    dim_location ||--o{ fact_orders : "location_key"
     dim_location ||--o{ fact_sales : "location_key"
-    dim_location ||--o{ fact_shipping : "location_key"
-    dim_product ||--o{ fact_sales_item : "product_key"
-    fact_sales ||--o{ fact_sales_item : "sales_id"
-    fact_sales ||--o{ fact_shipping : "sales_id"
-    fact_sales ||--o{ fact_tax : "sales_id"
+    dim_location ||--o{ fact_shipment : "location_key"
+    dim_product ||--o{ fact_sales : "product_key"
+    fact_orders ||--o{ fact_payment : "order_id"
+    fact_orders ||--o{ fact_sales : "order_id"
+    fact_orders ||--o{ fact_shipment : "order_id"
     dim_channel {
         INTEGER channel_key PK
         INTEGER channel_id
@@ -68,39 +74,48 @@ erDiagram
         SMALLINT score
         VARCHAR nps_category
     }
-    fact_sales {
-        INTEGER sales_id PK
+    fact_orders {
+        BIGINT order_id PK
         INTEGER date_key FK
         INTEGER customer_key FK
         INTEGER channel_key FK
         INTEGER location_key FK
         VARCHAR status
         DECIMAL subtotal
+        DECIMAL tax_amount
+        DECIMAL shipping_fee
         DECIMAL total_amount
     }
-    fact_sales_item {
+    fact_payment {
+        BIGINT payment_id PK
+        BIGINT order_id FK
+        INTEGER date_key FK
+        INTEGER customer_key FK
+        INTEGER channel_key FK
+        VARCHAR status
+        DECIMAL amount
+    }
+    fact_sales {
         BIGINT order_item_id PK
-        INTEGER sales_id FK
+        BIGINT order_id FK
         INTEGER date_key FK
         INTEGER product_key FK
+        INTEGER customer_key FK
+        INTEGER channel_key FK
+        INTEGER location_key FK
         INTEGER quantity
         DECIMAL line_total
         VARCHAR status
     }
-    fact_shipping {
-        BIGINT shipping_id PK
-        INTEGER sales_id FK
+    fact_shipment {
+        BIGINT shipment_id PK
+        BIGINT order_id FK
         INTEGER date_key FK
+        INTEGER customer_key FK
         INTEGER location_key FK
         VARCHAR carrier
         VARCHAR status
         DECIMAL shipping_fee
-    }
-    fact_tax {
-        INTEGER tax_id PK
-        INTEGER sales_id FK
-        INTEGER date_key FK
-        DECIMAL tax_amount
     }
     fact_web_session {
         BIGINT session_id PK

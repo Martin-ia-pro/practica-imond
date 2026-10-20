@@ -27,31 +27,34 @@
 
 -- TU TURNO: creá acá las tablas de hechos.
 
-
 -- ---------------------------------------------------------------------
--- 1. Hechos de Ventas Cabecera (fact_sales)
--- Grano: Una fila = un pedido. (Solo subtotales y totales puros)
+-- 1. Hechos de Pedidos (fact_orders)
+-- Grano: Una fila representa la cabecera de un pedido (raw.sales_order).
 -- ---------------------------------------------------------------------
-CREATE TABLE fact_sales (
-    sales_id INTEGER PRIMARY KEY,
+CREATE TABLE fact_orders (
+    order_id BIGINT PRIMARY KEY,
     date_key INTEGER REFERENCES dim_date (date_key),
     customer_key INTEGER REFERENCES dim_customer (customer_key),
     channel_key INTEGER REFERENCES dim_channel (channel_key),
     location_key INTEGER REFERENCES dim_location (location_key),
     status VARCHAR,
     subtotal DECIMAL(12,2),
+    tax_amount DECIMAL(12,2),
+    shipping_fee DECIMAL(12,2),
     total_amount DECIMAL(12,2)
 );
 
-INSERT INTO fact_sales
+INSERT INTO fact_orders
 SELECT 
-    so.order_id AS sales_id,
+    so.order_id,
     CAST(strftime(so.order_date, '%Y%m%d') AS INTEGER) AS date_key,
     COALESCE(dc.customer_key, -1) AS customer_key,
     COALESCE(dch.channel_key, -1) AS channel_key,
     COALESCE(dl.location_key, -1) AS location_key,
     so.status,
     so.subtotal,
+    so.tax_amount,
+    so.shipping_fee,
     so.total_amount
 FROM raw.sales_order AS so
 LEFT JOIN dim_customer AS dc ON so.customer_id = dc.customer_id
@@ -60,86 +63,45 @@ LEFT JOIN dim_location AS dl ON so.shipping_address_id = dl.address_id;
 
 
 -- ---------------------------------------------------------------------
--- 2. Hechos de Ventas Detalle (fact_sales_item)
--- Grano: Una fila = un producto dentro del pedido.
+-- 2. Hechos de Ventas por Producto (fact_sales)
+-- Grano: Una fila representa un ítem/producto dentro de un pedido (raw.sales_order_item).
 -- ---------------------------------------------------------------------
-CREATE TABLE fact_sales_item (
+CREATE TABLE fact_sales (
     order_item_id BIGINT PRIMARY KEY,
-    sales_id INTEGER REFERENCES fact_sales (sales_id),
+    order_id BIGINT REFERENCES fact_orders (order_id),
     date_key INTEGER REFERENCES dim_date (date_key),
     product_key INTEGER REFERENCES dim_product (product_key),
+    customer_key INTEGER REFERENCES dim_customer (customer_key),
+    channel_key INTEGER REFERENCES dim_channel (channel_key),
+    location_key INTEGER REFERENCES dim_location (location_key),
     quantity INTEGER,
     line_total DECIMAL(12,2),
     status VARCHAR
 );
 
-INSERT INTO fact_sales_item
+INSERT INTO fact_sales
 SELECT 
     soi.order_item_id,
-    so.order_id AS sales_id,
+    so.order_id,
     CAST(strftime(so.order_date, '%Y%m%d') AS INTEGER) AS date_key,
     COALESCE(dp.product_key, -1) AS product_key,
+    COALESCE(dc.customer_key, -1) AS customer_key,
+    COALESCE(dch.channel_key, -1) AS channel_key,
+    COALESCE(dl.location_key, -1) AS location_key,
     soi.quantity,
     soi.line_total,
     so.status 
 FROM raw.sales_order_item AS soi
 JOIN raw.sales_order AS so ON soi.order_id = so.order_id
-LEFT JOIN dim_product AS dp ON soi.product_id = dp.product_id;
-
-
--- ---------------------------------------------------------------------
--- 3. Hechos de Envíos (fact_shipping)
--- Grano: Una fila = el evento de enviar un pedido.
--- ---------------------------------------------------------------------
-CREATE TABLE fact_shipping (
-    shipping_id BIGINT PRIMARY KEY,
-    sales_id INTEGER REFERENCES fact_sales (sales_id),
-    date_key INTEGER REFERENCES dim_date (date_key),
-    location_key INTEGER REFERENCES dim_location (location_key),
-    carrier VARCHAR,
-    status VARCHAR,
-    shipping_fee DECIMAL(12,2)
-);
-
-INSERT INTO fact_shipping
-SELECT 
-    sh.shipment_id AS shipping_id,
-    sh.order_id AS sales_id,
-    CAST(strftime(so.order_date, '%Y%m%d') AS INTEGER) AS date_key,
-    COALESCE(dl.location_key, -1) AS location_key,
-    sh.carrier,
-    sh.status,
-    so.shipping_fee 
-FROM raw.shipment AS sh
-JOIN raw.sales_order AS so ON sh.order_id = so.order_id
+LEFT JOIN dim_product AS dp ON soi.product_id = dp.product_id
+LEFT JOIN dim_customer AS dc ON so.customer_id = dc.customer_id
+LEFT JOIN dim_channel AS dch ON so.channel_id = dch.channel_id
 LEFT JOIN dim_location AS dl ON so.shipping_address_id = dl.address_id;
 
 
 -- ---------------------------------------------------------------------
--- 4. Hechos de Impuestos (fact_tax)
--- Grano: Una fila = el cobro de impuesto de un pedido.
--- ---------------------------------------------------------------------
-CREATE TABLE fact_tax (
-    tax_id INTEGER PRIMARY KEY,
-    sales_id INTEGER REFERENCES fact_sales (sales_id),
-    date_key INTEGER REFERENCES dim_date (date_key),
-    tax_amount DECIMAL(12,2)
-);
-
--- Como no hay tabla raw de impuestos, extraemos el evento desde la orden
-INSERT INTO fact_tax
-SELECT 
-    ROW_NUMBER() OVER (ORDER BY order_id) AS tax_id,
-    order_id AS sales_id,
-    CAST(strftime(order_date, '%Y%m%d') AS INTEGER) AS date_key,
-    tax_amount
-FROM raw.sales_order
-WHERE tax_amount IS NOT NULL AND tax_amount > 0;
-
-
--- ---------------------------------------------------------------------
--- 5. Hechos de Sesiones Web (fact_web_session)
--- Grano: Una fila = una sesión de navegación web.
+-- 3. Hechos de Sesiones Web (fact_web_session)
+-- Grano: Una fila representa una sesión de navegación web (raw.web_session).
 -- ---------------------------------------------------------------------
 CREATE TABLE fact_web_session (
     session_id BIGINT PRIMARY KEY,
@@ -161,8 +123,8 @@ LEFT JOIN dim_customer AS dc ON ws.customer_id = dc.customer_id;
 
 
 -- ---------------------------------------------------------------------
--- 6. Hechos de Encuestas (fact_nps)
--- Grano: Una fila = una respuesta a la encuesta de satisfacción.
+-- 4. Hechos de Encuestas NPS (fact_nps)
+-- Grano: Una fila representa una respuesta a la encuesta NPS (raw.nps_response).
 -- ---------------------------------------------------------------------
 CREATE TABLE fact_nps (
     nps_id BIGINT PRIMARY KEY,
@@ -188,3 +150,63 @@ SELECT
 FROM raw.nps_response AS nps
 LEFT JOIN dim_customer AS dc ON nps.customer_id = dc.customer_id
 LEFT JOIN dim_channel AS dch ON nps.channel_id = dch.channel_id;
+
+
+-- ---------------------------------------------------------------------
+-- 5. Hechos de Pagos (fact_payment)
+-- Grano: Una fila representa una transacción de pago (raw.payment).
+-- ---------------------------------------------------------------------
+CREATE TABLE fact_payment (
+    payment_id BIGINT PRIMARY KEY,
+    order_id BIGINT REFERENCES fact_orders (order_id),
+    date_key INTEGER REFERENCES dim_date (date_key),
+    customer_key INTEGER REFERENCES dim_customer (customer_key),
+    channel_key INTEGER REFERENCES dim_channel (channel_key),
+    status VARCHAR,
+    amount DECIMAL(12,2)
+);
+
+INSERT INTO fact_payment
+SELECT 
+    p.payment_id,
+    p.order_id,
+    CAST(strftime(so.order_date, '%Y%m%d') AS INTEGER) AS date_key,
+    COALESCE(dc.customer_key, -1) AS customer_key,
+    COALESCE(dch.channel_key, -1) AS channel_key,
+    p.status,
+    p.amount
+FROM raw.payment AS p
+JOIN raw.sales_order AS so ON p.order_id = so.order_id
+LEFT JOIN dim_customer AS dc ON so.customer_id = dc.customer_id
+LEFT JOIN dim_channel AS dch ON so.channel_id = dch.channel_id;
+
+
+-- ---------------------------------------------------------------------
+-- 6. Hechos de Envíos (fact_shipment)
+-- Grano: Una fila representa un despacho de envío (raw.shipment).
+-- ---------------------------------------------------------------------
+CREATE TABLE fact_shipment (
+    shipment_id BIGINT PRIMARY KEY,
+    order_id BIGINT REFERENCES fact_orders (order_id),
+    date_key INTEGER REFERENCES dim_date (date_key),
+    customer_key INTEGER REFERENCES dim_customer (customer_key),
+    location_key INTEGER REFERENCES dim_location (location_key),
+    carrier VARCHAR,
+    status VARCHAR,
+    shipping_fee DECIMAL(12,2)
+);
+
+INSERT INTO fact_shipment
+SELECT 
+    sh.shipment_id,
+    sh.order_id,
+    CAST(strftime(so.order_date, '%Y%m%d') AS INTEGER) AS date_key,
+    COALESCE(dc.customer_key, -1) AS customer_key,
+    COALESCE(dl.location_key, -1) AS location_key,
+    sh.carrier,
+    sh.status,
+    so.shipping_fee
+FROM raw.shipment AS sh
+JOIN raw.sales_order AS so ON sh.order_id = so.order_id
+LEFT JOIN dim_customer AS dc ON so.customer_id = dc.customer_id
+LEFT JOIN dim_location AS dl ON so.shipping_address_id = dl.address_id;
