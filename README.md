@@ -229,12 +229,12 @@ El modelo separa las entidades descriptivas (**5 tablas de dimensiones**) de las
 
 1. **Criterio de Ventas Efectivas:** Para todos los indicadores comerciales (Total Ventas, Pedidos Vendidos, Ticket Promedio, Ventas por Provincia y Ranking por Producto) se consideran únicamente los pedidos con estado `status IN ('PAID', 'FULFILLED')`. Los pedidos cancelados (971 órdenes) se conservan en el Data Warehouse para trazabilidad histórica pero se excluyen de los KPIs de ingresos.
 2. **Desglose Contable del Pedido:** Se respeta la identidad contable del origen de datos:
-   $$\text{total\_amount} = \text{subtotal} + \text{tax\_amount (21\% IVA)} + \text{shipping\_fee}$$
+   > **`total_amount` = `subtotal` + `tax_amount` (21% IVA) + `shipping_fee`**
    * Cuando se analiza la facturación a nivel cabecera (`fact_orders`), se reporta tanto el bruto (`total_amount`: **$382,41M**) como sus componentes desglosados (ventas sin impuestos: **$309,89M**, IVA: **$65,08M**, envíos: **$7,44M**).
    * Cuando se analiza la participación por producto (`fact_sales`), se suma `line_total`, cuyo total coincide exactamente con el subtotal neto sin impuestos ni envío (**$309,89M**).
 3. **Regla de Usuarios Activos:** Un usuario activo en un período se contabiliza combinando los clientes registrados únicos que iniciaron sesión (`COUNT(DISTINCT customer_key)` cuando `customer_key != -1`) más las sesiones únicas de visitantes no logueados (`COUNT(DISTINCT session_id)` cuando `customer_key = -1`).
 4. **Cálculo de NPS:** Se categoriza cada respuesta en SQL (`Promotor` >= 9, `Pasivo` 7-8, `Detractor` <= 6) y se calcula el puntaje mediante la fórmula estándar:
-   $$\text{NPS} = \left( \frac{\text{Promotores}}{\text{Total Respuestas}} - \frac{\text{Detractores}}{\text{Total Respuestas}} \right) \times 100$$
+   > **`NPS` = ( (`Promotores` / `Total Respuestas`) - (`Detractores` / `Total Respuestas`) ) × 100**
 
 ---
 
@@ -293,32 +293,27 @@ El diagrama completo autogenerado por DuckDB también puede consultarse en [`dw/
 
 ```mermaid
 erDiagram
-    dim_date ||--o{ fact_orders : "date_key"
-    dim_customer ||--o{ fact_orders : "customer_key"
-    dim_channel ||--o{ fact_orders : "channel_key"
-    dim_location ||--o{ fact_orders : "location_key"
-
-    fact_orders ||--o{ fact_sales : "order_id"
-    dim_date ||--o{ fact_sales : "date_key"
-    dim_product ||--o{ fact_sales : "product_key"
-    dim_customer ||--o{ fact_sales : "customer_key"
-    dim_channel ||--o{ fact_sales : "channel_key"
-    dim_location ||--o{ fact_sales : "location_key"
-
-    dim_date ||--o{ fact_web_session : "date_key"
-    dim_customer ||--o{ fact_web_session : "customer_key"
-
-    dim_date ||--o{ fact_nps : "date_key"
-    dim_customer ||--o{ fact_nps : "customer_key"
-    dim_channel ||--o{ fact_nps : "channel_key"
-
-    fact_orders ||--o{ fact_payment : "order_id"
-    dim_date ||--o{ fact_payment : "date_key"
-    dim_customer ||--o{ fact_payment : "customer_key"
-    dim_channel ||--o{ fact_payment : "channel_key"
-
-    fact_orders ||--o{ fact_shipment : "order_id"
-    dim_date ||--o{ fact_shipment : "date_key"
-    dim_customer ||--o{ fact_shipment : "customer_key"
-    dim_location ||--o{ fact_shipment : "location_key"
+    dim_date ||--o{ fact_orders : date_key
+    dim_customer ||--o{ fact_orders : customer_key
+    dim_channel ||--o{ fact_orders : channel_key
+    dim_location ||--o{ fact_orders : location_key
+    fact_orders ||--o{ fact_sales : order_id
+    dim_date ||--o{ fact_sales : date_key
+    dim_product ||--o{ fact_sales : product_key
+    dim_customer ||--o{ fact_sales : customer_key
+    dim_channel ||--o{ fact_sales : channel_key
+    dim_location ||--o{ fact_sales : location_key
+    dim_date ||--o{ fact_web_session : date_key
+    dim_customer ||--o{ fact_web_session : customer_key
+    dim_date ||--o{ fact_nps : date_key
+    dim_customer ||--o{ fact_nps : customer_key
+    dim_channel ||--o{ fact_nps : channel_key
+    fact_orders ||--o{ fact_payment : order_id
+    dim_date ||--o{ fact_payment : date_key
+    dim_customer ||--o{ fact_payment : customer_key
+    dim_channel ||--o{ fact_payment : channel_key
+    fact_orders ||--o{ fact_shipment : order_id
+    dim_date ||--o{ fact_shipment : date_key
+    dim_customer ||--o{ fact_shipment : customer_key
+    dim_location ||--o{ fact_shipment : location_key
 ```
