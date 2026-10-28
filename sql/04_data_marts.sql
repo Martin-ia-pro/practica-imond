@@ -20,6 +20,8 @@ SELECT
     ch.name AS channel_name,
     o.location_key,
     l.province_name,
+    o.store_key,
+    st.store_name,
     o.subtotal AS ventas_sin_impuestos,
     o.tax_amount AS impuestos,
     (o.subtotal + o.tax_amount) AS ventas_sin_envio,
@@ -29,8 +31,8 @@ FROM fact_orders o
 JOIN dim_date d ON o.date_key = d.date_key
 JOIN dim_channel ch ON o.channel_key = ch.channel_key
 JOIN dim_location l ON o.location_key = l.location_key
+JOIN dim_store st ON o.store_key = st.store_key
 WHERE o.status IN ('PAID', 'FULFILLED');
-
 
 -- ---------------------------------------------------------------------
 -- 2. Data Mart de Ventas por Producto (dm_sales_products)
@@ -53,6 +55,8 @@ SELECT
     ch.name AS channel_name,
     s.location_key,
     l.province_name,
+    s.store_key,
+    st.store_name,
     s.quantity AS unidades_vendidas,
     s.line_total AS ventas_producto
 FROM fact_sales s
@@ -60,6 +64,7 @@ JOIN dim_date d ON s.date_key = d.date_key
 JOIN dim_product p ON s.product_key = p.product_key
 JOIN dim_channel ch ON s.channel_key = ch.channel_key
 JOIN dim_location l ON s.location_key = l.location_key
+JOIN dim_store st ON s.store_key = st.store_key
 WHERE s.status IN ('PAID', 'FULFILLED');
 
 

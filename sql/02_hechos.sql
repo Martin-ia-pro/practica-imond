@@ -37,6 +37,7 @@ CREATE TABLE fact_orders (
     customer_key INTEGER REFERENCES dim_customer (customer_key),
     channel_key INTEGER REFERENCES dim_channel (channel_key),
     location_key INTEGER REFERENCES dim_location (location_key),
+    store_key INTEGER REFERENCES dim_store (store_key),
     status VARCHAR,
     subtotal DECIMAL(12,2),
     tax_amount DECIMAL(12,2),
@@ -51,6 +52,7 @@ SELECT
     COALESCE(dc.customer_key, -1) AS customer_key,
     COALESCE(dch.channel_key, -1) AS channel_key,
     COALESCE(dl.location_key, -1) AS location_key,
+    COALESCE(ds.store_key, -1) AS store_key,
     so.status,
     so.subtotal,
     so.tax_amount,
@@ -59,7 +61,8 @@ SELECT
 FROM raw.sales_order AS so
 LEFT JOIN dim_customer AS dc ON so.customer_id = dc.customer_id
 LEFT JOIN dim_channel AS dch ON so.channel_id = dch.channel_id
-LEFT JOIN dim_location AS dl ON so.shipping_address_id = dl.address_id;
+LEFT JOIN dim_location AS dl ON so.shipping_address_id = dl.address_id
+LEFT JOIN dim_store AS ds ON so.store_id = ds.store_id;
 
 
 -- ---------------------------------------------------------------------
@@ -74,6 +77,7 @@ CREATE TABLE fact_sales (
     customer_key INTEGER REFERENCES dim_customer (customer_key),
     channel_key INTEGER REFERENCES dim_channel (channel_key),
     location_key INTEGER REFERENCES dim_location (location_key),
+    store_key INTEGER REFERENCES dim_store (store_key),
     quantity INTEGER,
     line_total DECIMAL(12,2),
     status VARCHAR
@@ -88,6 +92,7 @@ SELECT
     COALESCE(dc.customer_key, -1) AS customer_key,
     COALESCE(dch.channel_key, -1) AS channel_key,
     COALESCE(dl.location_key, -1) AS location_key,
+    COALESCE(ds.store_key, -1) AS store_key,
     soi.quantity,
     soi.line_total,
     so.status 
@@ -96,7 +101,8 @@ JOIN raw.sales_order AS so ON soi.order_id = so.order_id
 LEFT JOIN dim_product AS dp ON soi.product_id = dp.product_id
 LEFT JOIN dim_customer AS dc ON so.customer_id = dc.customer_id
 LEFT JOIN dim_channel AS dch ON so.channel_id = dch.channel_id
-LEFT JOIN dim_location AS dl ON so.shipping_address_id = dl.address_id;
+LEFT JOIN dim_location AS dl ON so.shipping_address_id = dl.address_id
+LEFT JOIN dim_store AS ds ON so.store_id = ds.store_id;
 
 
 -- ---------------------------------------------------------------------

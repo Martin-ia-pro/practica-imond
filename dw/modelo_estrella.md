@@ -24,6 +24,8 @@ erDiagram
     dim_location ||--o{ fact_sales : "location_key"
     dim_location ||--o{ fact_shipment : "location_key"
     dim_product ||--o{ fact_sales : "product_key"
+    dim_store ||--o{ fact_orders : "store_key"
+    dim_store ||--o{ fact_sales : "store_key"
     fact_orders ||--o{ fact_payment : "order_id"
     fact_orders ||--o{ fact_sales : "order_id"
     fact_orders ||--o{ fact_shipment : "order_id"
@@ -66,6 +68,13 @@ erDiagram
         VARCHAR family
         DECIMAL list_price
     }
+    dim_store {
+        INTEGER store_key PK
+        INTEGER store_id
+        VARCHAR store_name
+        VARCHAR city
+        VARCHAR province_name
+    }
     dm_nps {
         BIGINT nps_id
         INTEGER date_key
@@ -92,6 +101,8 @@ erDiagram
         VARCHAR channel_name
         INTEGER location_key
         VARCHAR province_name
+        INTEGER store_key
+        VARCHAR store_name
         DECIMAL ventas_sin_impuestos
         DECIMAL impuestos
         DECIMAL ventas_sin_envio
@@ -114,6 +125,8 @@ erDiagram
         VARCHAR channel_name
         INTEGER location_key
         VARCHAR province_name
+        INTEGER store_key
+        VARCHAR store_name
         INTEGER unidades_vendidas
         DECIMAL ventas_producto
     }
@@ -144,6 +157,7 @@ erDiagram
         INTEGER customer_key FK
         INTEGER channel_key FK
         INTEGER location_key FK
+        INTEGER store_key FK
         VARCHAR status
         DECIMAL subtotal
         DECIMAL tax_amount
@@ -167,6 +181,7 @@ erDiagram
         INTEGER customer_key FK
         INTEGER channel_key FK
         INTEGER location_key FK
+        INTEGER store_key FK
         INTEGER quantity
         DECIMAL line_total
         VARCHAR status

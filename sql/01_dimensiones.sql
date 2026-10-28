@@ -168,3 +168,27 @@ FROM (
     SELECT CAST(range AS DATE) AS fecha
     FROM range(DATE '2024-01-01', DATE '2025-10-01', INTERVAL 1 DAY)
 );
+
+-- ---------------------------------------------------------------------
+-- 6. Dimensión de Tiendas Físicas (dim_store)
+-- ---------------------------------------------------------------------
+CREATE TABLE dim_store (
+    store_key INTEGER PRIMARY KEY,
+    store_id INTEGER,
+    store_name VARCHAR,
+    city VARCHAR,
+    province_name VARCHAR
+);
+
+INSERT INTO dim_store VALUES (-1, -1, 'Venta Online / Sin Tienda Física', 'N/A', 'N/A');
+
+INSERT INTO dim_store
+SELECT 
+    ROW_NUMBER() OVER (ORDER BY s.store_id) AS store_key,
+    s.store_id,
+    s.name AS store_name,
+    COALESCE(a.city, 'Sin especificar') AS city,
+    COALESCE(p.name, 'Sin especificar') AS province_name
+FROM raw.store AS s
+LEFT JOIN raw.address AS a ON s.address_id = a.address_id
+LEFT JOIN raw.province AS p ON a.province_id = p.province_id;
