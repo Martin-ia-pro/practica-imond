@@ -42,10 +42,14 @@ SELECT
     SUM(total_amount) - SUM(subtotal + tax_amount + shipping_fee) AS diferencia
 FROM fact_orders;
 
--- Validación 3: Control de claves foráneas nulas y registros anónimos/sin envío (-1)
+-- Validación 3: Control de claves foráneas nulas y registros anónimos/online (-1)
 SELECT 
-    COUNT(*) FILTER (WHERE customer_key IS NULL OR date_key IS NULL OR channel_key IS NULL OR location_key IS NULL) AS claves_foraneas_nulas,
-    COUNT(*) FILTER (WHERE location_key = -1) AS pedidos_sin_envio_domicilio,
+    COUNT(*) FILTER (
+        WHERE customer_key IS NULL OR date_key IS NULL OR channel_key IS NULL 
+           OR location_key IS NULL OR store_key IS NULL
+    ) AS claves_foraneas_nulas,
+    COUNT(*) FILTER (WHERE store_key = -1) AS pedidos_canal_online,
+    COUNT(*) FILTER (WHERE store_key != -1) AS pedidos_tienda_fisica,
     (SELECT COUNT(*) FILTER (WHERE customer_key = -1) FROM fact_web_session) AS sesiones_web_anonimas
 FROM fact_orders;
 
@@ -129,3 +133,16 @@ JOIN dim_product AS p ON s.product_key = p.product_key
 WHERE s.status IN ('PAID', 'FULFILLED')
 GROUP BY d.year, d.month, d.month_name, p.name
 ORDER BY d.year, d.month, total_sales DESC;
+
+-- 8. Ventas por Sucursal Física (dim_store)
+SELECT 
+    st.store_name,
+    st.city,
+    st.province_name,
+    COUNT(DISTINCT o.order_id) AS pedidos,
+    SUM(o.total_amount) AS total_ventas
+FROM fact_orders AS o
+JOIN dim_store AS st ON o.store_key = st.store_key
+WHERE o.status IN ('PAID', 'FULFILLED') AND o.store_key != -1
+GROUP BY st.store_name, st.city, st.province_name
+ORDER BY total_ventas DESC;
