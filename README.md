@@ -27,6 +27,7 @@ Los datos de entrada provienen de archivos CSV transaccionales ubicados en la ca
 | Ruta | Contenido |
 | :--- | :--- |
 | `assets/` | Recursos gráficos e imágenes de referencia del proyecto. |
+| `dashboard/` | Carpeta que almacena el archivo binario interactivo de Power BI (`.pbix`) con el tablero final. |
 | `dw/` | Carpeta de salida donde se exportan los archivos `.csv` de dimensiones (`dim_*`), hechos (`fact_*`) y data marts (`dm_*`) para Power BI. |
 | `dw/modelo_estrella.md` | Diagrama Entidad-Relación en formato Mermaid autogenerado al ejecutar el pipeline. |
 | `generator/` | Scripts de generación de los datos transaccionales de muestra. |
@@ -77,6 +78,10 @@ El control de versiones se realizó íntegramente desde la consola utilizando **
 - `docs:` para la redacción del manual técnico y actualización automática del diagrama en Markdown.
 
 La base de datos local (`warehouse.duckdb`) no se sube al repositorio remoto dado que se regenera de forma determinística mediante `python run_sql.py`, mientras que los archivos `.csv` de `dw/` fueron incluidos en el repositorio para su evaluación directa.
+
+**Tratamiento de archivos binarios y exportaciones en Git:**
+- **Reporte de Power BI (`dashboard/*.pbix`):** Si bien el formato `.pbix` es un **archivo binario** empaquetado (que contiene el modelo tabular comprimido y la capa visual), se versiona explícitamente dentro de la carpeta `dashboard/` por tratarse del entregable final de visualización requerido para la evaluación.
+- **Exportaciones (`dw/*.csv`):** Se incluyen en el repositorio para permitir la auditoría directa de las tablas de dimensiones, hechos y data marts sin necesidad de re-ejecutar el motor SQL.
 
 ---
 
@@ -334,6 +339,7 @@ El tablero interactivo se alimenta de los Data Marts (`dm_*`) y Dimensiones (`di
 - **Página 2 — Análisis de Tiendas y Regiones:** Desempeño comercial por sucursal (`dim_store`), comparativa de ventas por tienda y producto, y mapa geográfico de cobertura provincial en Argentina.
 - **Página 3 — Desglose Financiero y Logístico:** Discriminación contable de la facturación bruta (`$382,41 mill.`) separando Venta Neta sin impuestos ni envío (`$309,89 mill.`), IVA (`$65,08 mill.`) y Costo de Envío (`$7,44 mill.`), junto con el análisis de costos de envío por provincia y su evolución mensual.
 - **Consideración técnica en Power Query:** Los campos decimales (`ventas_*`, `impuestos`, `costo_envio`, `puntos_nps`) se tipifican utilizando la configuración regional *Inglés (Estados Unidos)* para interpretar correctamente el separador decimal de punto (`.`), y la columna `month_name` de `dim_date` se ordena cronológicamente mediante la columna `month`.
+- **Archivo entregable (binario):** El proyecto compilado de Power BI se encuentra disponible en la ruta `dashboard/` en formato binario `.pbix`.
 
 ---
 
