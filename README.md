@@ -10,6 +10,9 @@
 
 El objetivo de este proyecto es diseñar e implementar un **Data Warehouse (DW)** bajo un **esquema estrella (metodología Kimball)** y una capa de **Data Marts** utilizando **DuckDB** y **SQL**, transformando los datos transaccionales crudos en un modelo analítico optimizado. A partir de este modelo, se validan y disponibilizan los indicadores clave de rendimiento (KPIs) comerciales, logísticos, de tráfico digital y de satisfacción del cliente (NPS) para la toma de decisiones en un dashboard interactivo en **Power BI**.
 
+**Acceso Rápido:**
+- **Dashboard:** archivo de Power BI en [`dashboard/EcoBottle_Dashboard.pbix`](dashboard/EcoBottle_Dashboard.pbix) (ver la [sección 12](#12-dashboard-en-power-bi)).
+
 ---
 
 ## 2. Origen de los Datos
