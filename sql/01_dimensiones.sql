@@ -84,7 +84,7 @@ VALUES (-1, -1, 'Desconocido', 'Desconocido', 'Desconocido', 'Desconocido', 'Des
 
 INSERT INTO dim_customer
 SELECT 
-    ROW_NUMBER() OVER (ORDER BY customer_id) AS customer_key,
+    ROW_NUMBER() OVER (ORDER BY customer_id) AS customer_key,  -- sirve para crear la clave subrrogada 
     customer_id,
     first_name,
     last_name,
@@ -165,7 +165,7 @@ SELECT
     monthname(fecha) AS month_name,
     dayname(fecha) AS day_name
 FROM (
-    SELECT CAST(range AS DATE) AS fecha
+    SELECT CAST(range AS DATE) AS fecha  -- para tener una linea temporal sin interrupciones, que abarca todo el rango de los datos
     FROM range(DATE '2024-01-01', DATE '2025-10-01', INTERVAL 1 DAY)
 );
 
