@@ -146,7 +146,7 @@ FROM raw.channel;
 -- ---------------------------------------------------------------------
 -- 4. Dimensión de Tiempo / Calendario (dim_date)
 -- ---------------------------------------------------------------------
--- Basado en los tips de la consigna para tener el análisis mensual
+
 CREATE TABLE dim_date (
     date_key   INTEGER PRIMARY KEY,
     full_date  DATE NOT NULL,
