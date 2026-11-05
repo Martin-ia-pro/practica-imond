@@ -21,9 +21,10 @@ El objetivo de este proyecto es diseñar e implementar un **Data Warehouse (DW)*
 ---
 
 ## 2. Origen de los Datos
+
 Los datos de entrada provienen de archivos CSV transaccionales ubicados en la carpeta `raw/`, los cuales simulan el sistema operacional (OLTP) de la compañía entre enero de 2024 y septiembre de 2025:
 
-- **Maestros y Contexto:** `customer.csv` (clientes), `address.csv` (direcciones postales), `province.csv` (provincias argentinas), `channel.csv` (canales de venta), `store.csv` (tiendas físicas) y `product.csv` (catálogo de productos y precios de lista).
+- **Maestros y Contexto:** `customer.csv` (clientes), `address.csv` (direcciones postales), `province.csv` (provincias argentinas), `channel.csv` (canales de venta), `store.csv` (tiendas físicas), `product_category.csv` (jerarquía de categorías) y `product.csv` (catálogo de productos y precios de lista).
 - **Transacciones Comerciales:** `sales_order.csv` (cabecera de pedidos con subtotales, impuestos y costos de envío) y `sales_order_item.csv` (detalle de líneas de producto por pedido, cantidades y descuentos).
 - **Operaciones y Pagos:** `payment.csv` (transacciones de cobro y medios de pago) y `shipment.csv` (envíos logísticos, transportistas y fechas de entrega).
 - **Comportamiento y Satisfacción:** `web_session.csv` (registro de sesiones de navegación web, tanto de usuarios logueados como anónimos) y `nps_response.csv` (respuestas a encuestas de satisfacción Net Promoter Score).
