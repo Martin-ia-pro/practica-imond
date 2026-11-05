@@ -138,9 +138,11 @@ El modelo separa las entidades descriptivas (**6 tablas de dimensiones**) de las
 | :--- | :--- | :--- | :--- |
 | `customer_key` | `INTEGER` | `PRIMARY KEY` | Clave subrogada del cliente (`-1` reservado para usuario anónimo). |
 | `customer_id` | `INTEGER` | — | Identificador natural del cliente en el sistema transaccional (`raw.customer`). |
+| `first_name` | `VARCHAR` | — | Nombre de pila del cliente. |
+| `last_name` | `VARCHAR` | — | Apellido del cliente. |
 | `full_name` | `VARCHAR` | — | Nombre y apellido o descripción del cliente. |
 | `email` | `VARCHAR` | — | Correo electrónico de contacto. |
-| `segment` | `VARCHAR` | — | Segmento comercial o estado del cliente. |
+| `status_desc` | `VARCHAR` | — | Descripción del estado actual del cliente en el sistema. |
 
 #### `dim_location`
 | Columna | Tipo | Restricciones | Significado |
@@ -149,6 +151,7 @@ El modelo separa las entidades descriptivas (**6 tablas de dimensiones**) de las
 | `address_id` | `INTEGER` | — | Identificador natural de la dirección en `raw.address`. |
 | `city` | `VARCHAR` | — | Ciudad correspondiente al domicilio. |
 | `province_name` | `VARCHAR` | `NOT NULL` | Nombre de la provincia argentina (Buenos Aires, Córdoba, Santa Fe, Mendoza). |
+| `province_code` | `VARCHAR` | — | Código o abreviatura asignada a la provincia. |
 
 #### `dim_channel`
 | Columna | Tipo | Restricciones | Significado |
