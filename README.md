@@ -12,6 +12,11 @@ El objetivo de este proyecto es diseñar e implementar un **Data Warehouse (DW)*
 
 **Acceso Rápido:**
 - **Dashboard:** archivo de Power BI en [`dashboard/EcoBottle_Dashboard.pbix`](dashboard/EcoBottle_Dashboard.pbix) (ver la [sección 12](#12-dashboard-en-power-bi)).
+<img width="1301" height="729" alt="image" src="https://github.com/user-attachments/assets/50f12a38-6557-4f04-bad4-100cc05e614b" />
+<img width="1300" height="732" alt="image" src="https://github.com/user-attachments/assets/e62b052a-3e5e-472f-bbac-ad60f00a45f9" />
+<img width="1300" height="732" alt="image" src="https://github.com/user-attachments/assets/d291c5da-6743-46b7-aec3-d5c10ee1f116" />
+<img width="1303" height="730" alt="image" src="https://github.com/user-attachments/assets/6543894b-f876-467c-8623-1c6c7c666beb" />
+
 
 ---
 
