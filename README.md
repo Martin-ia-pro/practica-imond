@@ -346,12 +346,14 @@ En la sección A de `sql/03_consultas.sql` se ejecutan tres controles automátic
 
 ## 12. Dashboard en Power BI
 
-El tablero interactivo se alimenta de los Data Marts (`dm_*`) y Dimensiones (`dim_*`) exportados en `dw/` y se estructura en tres páginas:
-- **Página 1 — Resumen Ejecutivo:** Tarjetas superiores con los 5 KPIs globales (Total Ventas: `$382,41 mill.`, Ticket Promedio: `$34,77 mil`, Órdenes Realizadas: `10.998`, Usuarios Activos: `73.828` y Puntos NPS: `30`), evolución temporal de usuarios activos, evolución mensual por producto, gráfico de anillo de participación por botella (`Sport B Bottle` 52,51% vs `Classic A Bottle` 47,49%) y ranking de ventas por provincia.
-- **Página 2 — Análisis de Tiendas y Regiones:** Desempeño comercial por sucursal (`dim_store`), comparativa de ventas por tienda y producto, y mapa geográfico de cobertura provincial en Argentina.
-- **Página 3 — Desglose Financiero y Logístico:** Discriminación contable de la facturación bruta (`$382,41 mill.`) separando Venta Neta sin impuestos ni envío (`$309,89 mill.`), IVA (`$65,08 mill.`) y Costo de Envío (`$7,44 mill.`), junto con el análisis de costos de envío por provincia y su evolución mensual.
-- **Consideración técnica en Power Query:** Los campos decimales (`ventas_*`, `impuestos`, `costo_envio`, `puntos_nps`) se tipifican utilizando la configuración regional *Inglés (Estados Unidos)* para interpretar correctamente el separador decimal de punto (`.`), y la columna `month_name` de `dim_date` se ordena cronológicamente mediante la columna `month`.
-- **Archivo entregable (binario):** El proyecto compilado de Power BI se encuentra disponible en la ruta `dashboard/` en formato binario `.pbix`.
+El tablero interactivo se alimenta de los Data Marts (`dm_*`) y Dimensiones (`dim_*`) exportados en `dw/` y se estructura en cuatro páginas:
+
+* **Página 1 — Resumen Ejecutivo (Ventas):** Tarjetas superiores con los 5 KPIs globales (Total Ventas: `$382,41 mill.`, Ticket Promedio: `$34,77 mil`, Órdenes Realizadas: `10.998`, Usuarios Activos: `73.828` y Puntos NPS: `30`), evolución temporal de ventas, evolución temporal por productos y ranking mensual de ventas por botella[cite: 18].
+* **Página 2 — Resumen Ejecutivo (Usuarios y NPS):** Mantiene los KPIs globales, incorporando la evolución temporal de usuarios activos, evolución mensual del NPS, gráfico de anillo de participación por botella (`Sport B Bottle` 52,51% vs `Classic A Bottle` 47,49%) y ranking de ventas por provincia[cite: 19].
+* **Página 3 — Análisis de Tiendas y Regiones:** Desempeño comercial por sucursal (`dim_store`), comparativa de ventas por tienda y producto, participación de ventas de sucursales por canal, mapa geográfico de cobertura provincial en Argentina y tabla resumen de métricas operativas[cite: 20].
+* **Página 4 — Desglose Financiero y Logístico:** Discriminación contable de la facturación bruta (`$382,41 mill.`) separando Total Neto (`$309,89 mill.`), Impuestos (`$65,08 mill.`) y Costos de envío (`$7,44 mill.`), explicando visualmente la ecuación de ventas junto con el análisis desglosado en tablas limpias por provincia y por canal[cite: 21].
+* **Consideración técnica en Power Query:** Los campos decimales (`ventas_*`, `impuestos`, `costo_envio`, `puntos_nps`) se tipifican utilizando la configuración regional *Inglés (Estados Unidos)* para interpretar correctamente el separador decimal de punto (`.`), y la columna `month_name` de `dim_date` se ordena cronológicamente mediante la columna `month`[cite: 17].
+* **Archivo entregable (binario):** El proyecto compilado de Power BI se encuentra disponible en la ruta `dashboard/` en formato binario `.pbix`[cite: 17].
 
 ---
 
